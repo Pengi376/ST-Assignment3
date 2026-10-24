@@ -5,7 +5,6 @@ import argparse
 
 from smartcare.console import run_demo, run_menu
 
-
 def main() -> None:
     """Run the demo, or report the intentionally incomplete interactive
     menu.
@@ -22,5 +21,6 @@ def main() -> None:
             print(error)
     else:
         run_demo()
+
 if __name__ == '__main__':
     main()

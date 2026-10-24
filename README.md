@@ -5,9 +5,9 @@ Baseline: Stage 6 foundation, 2026 revision 2. This starter deliberately leaves 
 
 ## Group index
 
-- Group and tutorial: [complete]
-- Member names, GitHub usernames and UG/PG cohorts: [complete]
-- Shared repository URL: [complete]
+- Group and tutorial: Group 1 / Thursday at 2.30 pm
+- Members, GitHub usernames and cohorts: Rylan - Pengi376, Tomas - Tom-uc3, Barry - BarrytheLegoMan;   
+- Repository URL: https://github.com/Pengi376/ST-Assignment3
 - Latest completed stage: [complete]
 - Verified code SHA: [complete]
 - Test command, working directory and observed result: [complete]

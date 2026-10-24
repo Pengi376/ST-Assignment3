@@ -149,3 +149,221 @@ def test_domain_cancellation_and_guard() -> None:
     with pytest.raises(ValueError):
         appointment.cancel()
     assert appointment.status is AppointmentStatus.CANCELLED
+
+def test_find_patient_returns_registered_patient():
+    """Verify find_patient returns registered patient."""
+    data_store = SmartCareDataStore()
+    service = PatientService(data_store)
+
+    patient = service.register_patient(
+        "P001",
+        "John Doe",
+    )
+
+    result = service.find_patient("P001")
+
+    assert result is patient
+
+
+def test_find_practitioner_returns_registered_practitioner():
+    """Verify practitioner with registered practitioner."""
+    data_store = SmartCareDataStore()
+    service = PractitionerService(data_store)
+
+    practitioner = service.register_practitioner(
+        "PR001",
+        "Dr Smith",
+        "General Practice",
+    )
+
+    result = service.find_practitioner("PR001")
+
+    assert result is practitioner
+
+
+def test_find_practitioner_raises_lookup_error_for_unknown_id():
+    """Verify practitioner with unknown practitioner."""
+    data_store = SmartCareDataStore()
+    service = PractitionerService(data_store)
+
+    with pytest.raises(LookupError):
+        service.find_practitioner("PR999")
+
+
+def test_find_practitioner_raises_value_error_for_blank_id():
+    """Verify practitioner with blank practitioner."""
+    data_store = SmartCareDataStore()
+    service = PractitionerService(data_store)
+
+    with pytest.raises(ValueError):
+        service.find_practitioner("")
+
+
+def test_find_practitioner_raises_value_error_for_whitespace_id():
+    """Verify practitioner with whitespace practitioner."""
+    data_store = SmartCareDataStore()
+    service = PractitionerService(data_store)
+
+    with pytest.raises(ValueError):
+        service.find_practitioner("   ")
+
+
+def test_find_practitioner_lookup_is_case_sensitive():
+    """Verify practitioner with case sensitive practitioner."""
+    data_store = SmartCareDataStore()
+    service = PractitionerService(data_store)
+
+    service.register_practitioner(
+        "PR001",
+        "Dr Smith",
+        "General Practice",
+    )
+
+    with pytest.raises(LookupError):
+        service.find_practitioner("pr001")
+
+def test_cancel_appointment_changes_status_and_returns_same_object():
+    """Verify cancel_appointment changes status and returns."""
+    data_store = SmartCareDataStore()
+    patient_service = PatientService(data_store)
+    practitioner_service = PractitionerService(data_store)
+    appointment_service = AppointmentService(data_store)
+
+    patient_service.register_patient("P001", "John Doe")
+
+    practitioner_service.register_practitioner(
+        "PR001",
+        "Dr Smith",
+        "General Practice",
+    )
+
+    appointment = appointment_service.book_appointment(
+        "A001",
+        "P001",
+        "PR001",
+        datetime(2026, 1, 1, 10, 0),
+    )
+
+    result = appointment_service.cancel_appointment("A001")
+
+    assert result is appointment
+    assert result.status is AppointmentStatus.CANCELLED
+
+
+def test_cancelled_appointment_remains_retrievable():
+    """Verify cancel_appointment remain retrievable"""
+    data_store = SmartCareDataStore()
+
+    patient_service = PatientService(data_store)
+    practitioner_service = PractitionerService(data_store)
+    appointment_service = AppointmentService(data_store)
+
+    patient_service.register_patient("P001", "John Doe")
+
+    practitioner_service.register_practitioner(
+        "PR001",
+        "Dr Smith",
+        "General Practice",
+    )
+
+    appointment = appointment_service.book_appointment(
+        "A001",
+        "P001",
+        "PR001",
+        datetime(2026, 1, 1, 10, 0),
+    )
+
+    appointment_service.cancel_appointment("A001")
+
+    retrieved = appointment_service.find_appointment("A001")
+
+    assert retrieved is appointment
+    assert retrieved.status is AppointmentStatus.CANCELLED
+
+def test_cancel_appointment_twice_raises_value_error():
+    """Verify cancel_appointment twice."""
+    data_store = SmartCareDataStore()
+
+    patient_service = PatientService(data_store)
+    practitioner_service = PractitionerService(data_store)
+    appointment_service = AppointmentService(data_store)
+
+    patient_service.register_patient("P001", "Barry")
+
+    practitioner_service.register_practitioner(
+        "PR001",
+        "Dr Smith",
+        "General Practice",
+    )
+
+    appointment = appointment_service.book_appointment(
+        "A001",
+        "P001",
+        "PR001",
+        datetime(2026, 1, 1, 10, 0),
+    )
+
+    appointment_service.cancel_appointment("A001")
+
+    with pytest.raises(ValueError):
+        appointment_service.cancel_appointment("A001")
+
+    assert appointment.status is AppointmentStatus.CANCELLED
+
+def test_cancel_unknown_appointment_raises_lookup_error():
+    """Verify cancel_appointment lookup error."""
+    data_store = SmartCareDataStore()
+    appointment_service = AppointmentService(data_store)
+
+    with pytest.raises(LookupError):
+        appointment_service.cancel_appointment("A999")
+
+def test_cancel_completed_appointment_raises_value_error():
+    """Verify cancel_appointment completed value."""
+    data_store = SmartCareDataStore()
+
+    patient_service = PatientService(data_store)
+    practitioner_service = PractitionerService(data_store)
+    appointment_service = AppointmentService(data_store)
+
+    patient = patient_service.register_patient(
+        "P001",
+        "John Doe",
+    )
+
+    practitioner = practitioner_service.register_practitioner(
+        "PR001",
+        "Dr Smith",
+        "General Practice",
+    )
+
+    appointment = Appointment(
+        "A001",
+        patient,
+        practitioner,
+        datetime(2026, 1, 1, 10, 0),
+        AppointmentStatus.COMPLETED,
+    )
+
+    data_store.add_appointment(appointment)
+
+    with pytest.raises(ValueError):
+        appointment_service.cancel_appointment("A001")
+
+    assert appointment.status is AppointmentStatus.COMPLETED
+
+def test_cancel_appointment_with_blank_id_raises_value_error():
+    """Verify cancel_appointment with blank id."""
+    data_store = SmartCareDataStore()
+    appointment_service = AppointmentService(data_store)
+
+    with pytest.raises(ValueError):
+        appointment_service.cancel_appointment("")
+
+def test_cancel_appointment_with_whitespace_id_raises_value_error():
+    """Verify cancel_appointment with whitespace id."""
+    data_store = SmartCareDataStore()
+    appointment_service = AppointmentService(data_store)
+
+    with pytest.raises(ValueError):
+        appointment_service.cancel_appointment("   ")
