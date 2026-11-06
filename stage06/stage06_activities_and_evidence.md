@@ -174,16 +174,16 @@ Create at least two focused issues. Add a linked practitioner-lookup issue or an
 4. Changed behaviour: Implemented patient lookup, practitioner lookup and appointment cancellation services.
 5. Meaningful commits: [commit links]
 6. Test command, directory and observed result: python -m pytest, project/, Observed result: 21 tests collected and all 21 passed successfully in 0.05 seconds. Exit code 0.
-7. Another-member reviewer: [name if code was reviewed].
+7. Another-member reviewer: Tomas.
 8. Human observations recorded before Copilot: Recorded in Stage 6 evidence document.
 9. Requirement, responsibilities, test assertions and unrelated-scope checks: Checked service contracts, exception handling and Stage 6 requirements.
-10. Key feedback: [actual feedback received or "None"].
+10. Key feedback: none.
 11. Author response/change and verification: Author Barry [name of verification] .
-12. Reviewer recheck and approval: [if applicable].
+12. Reviewer recheck and approval: N/a.
 13. Merge outcome and SHA: Changes committed directly to main, SHA [actual SHA].
 14. Significant Copilot assistance: Used for implementation discussion and test design. All suggestions independently reviewed and verified. Use of Co-pilot as assistance technology and part of RAP.
 15. Linked issue closure: [issue reference or completion note].
-16. Each member updated main: [member names and confirmations].
+16. Each member updated main: Tom = updated, Rylan = updated, Barry = Updated.
 17. Integrated verification after merge: python -m pytest, project/, [actual result], SHA [actual SHA].
 
 
@@ -235,6 +235,14 @@ Repeat per member. Include only categories that describe actual work; write not 
 - Debugging or integration: [work and evidence]
 - Documentation or team support: [work and evidence]
 
+- Member: Tomas Keily
+- Implementation: I reviewed all of stage 6 work and Implemented stage 7 testing files and code.
+- Testing: test_domain.py and test_services.py
+- Review: I reviewed stage 6.
+- Issue refinement: n/a
+- Design and responsibility discussion: N/a
+- Debugging or integration: N/A
+- Documentation or team support: N/A
 
 - Member: Barry Dobson
 
@@ -307,7 +315,7 @@ The Stage 6 engineering rule is to follow the complete development cycle: unders
 
 1. Starting SHA: [starting commit SHA]
 
-2. Final Stage 6 code SHA: [tested commit SHA]
+2. Final Stage 6 code SHA: 02fe9ff0e49ce941d8c86957621d9b2d56528bef
 
 3. Test command: `python -m pytest`
 
@@ -315,7 +323,7 @@ The Stage 6 engineering rule is to follow the complete development cycle: unders
 
 5. Observed result: 21 tests collected, 21 tests passed, 0 failed. Exit code 0.
 
-6. PR and another-member reviewer: No formal PR used. Team reviewed changes directly on the shared repository. Reviewer: [team member name].
+6. PR and another-member reviewer: No formal PR used. Team reviewed changes directly on the shared repository. Reviewer: Tomas.
 
 7. Unresolved issue or none: None identified for Stage 6.
 
@@ -335,7 +343,7 @@ The Stage 6 engineering rule is to follow the complete development cycle: unders
 
 15. Feedback resolved and approval recorded before merge: Yes, where applicable to team workflow.
 
-16. Everyone pulled main and integrated checks passed: [Not yet]
+16. Everyone pulled main and integrated checks passed: yes
 
 17. Required activities, quiz responses and contribution notes completed: Yes.
 
