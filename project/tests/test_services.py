@@ -214,3 +214,42 @@ def known_appointment_lookup() -> None:
     assert find_appointment is appointment
 
 
+def test_list_practitioner_appointments_known_empty_and_invalid_inputs() -> None:
+    """Distinguish known-empty, unknown and invalid service requests."""
+    data_store = SmartCareDataStore()
+    practitioner_service = PractitionerService(data_store)
+    appointment_service = AppointmentService(data_store)
+    practitioner_service.register_practitioner(
+        'D1', 'Taylor Example', 'General',
+    )
+
+    assert appointment_service.list_practitioner_appointments('D1') == []
+    with pytest.raises(LookupError):
+        appointment_service.list_practitioner_appointments('missing')
+    with pytest.raises(ValueError):
+        appointment_service.list_practitioner_appointments(' ')
+    with pytest.raises(ValueError):
+        appointment_service.list_practitioner_appointments('D1', 'scheduled')
+    assert data_store.list_appointments() == []
+
+
+def test_list_practitioner_appointments_retains_cancelled_history() -> None:
+    """Cancelled appointments remain retrievable and in all-status listings."""
+    data_store, _, practitioner, appointment_service = foundation()
+    appointment = appointment_service.book_appointment(
+        'A1', 'P1', 'D1', datetime(2026, 10, 1, 9),
+    )
+
+    cancelled = appointment_service.cancel_appointment('A1')
+
+    assert cancelled is appointment
+    assert appointment_service.find_appointment('A1') is appointment
+    assert appointment in appointment_service.list_practitioner_appointments(
+        practitioner.practitioner_id,
+    )
+    assert appointment_service.list_practitioner_appointments(
+        practitioner.practitioner_id,
+        AppointmentStatus.SCHEDULED,
+    ) == []
+    assert data_store.list_appointments() == [appointment]
+
