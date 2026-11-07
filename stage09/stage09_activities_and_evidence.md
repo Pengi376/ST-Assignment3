@@ -111,43 +111,64 @@ Include registration/find, booking, conflict rejection, different-practitioner b
 ## E. GitHub Copilot review and human decisions
 
 Human design completed before AI: <!-- reference -->
-Actual prompt/context supplied: <!-- paste or accessible reference -->
-Actual response: <!-- accessible reference -->
+Actual prompt/context supplied: Act as a query and console integration reviewer for SmartCare.
+Review the supplied code and tests for:
+1. explicit inputs, purity and source non-mutation;
+2. domain, service, data-store and console responsibilities;
+3. validation and recovery without partial state changes;
+4. correct object identity, enum filtering and ordering;
+5. retained history and integrity risks;
+6. missing query, workflow and console tests.
+Do not redesign the domain or add storage/frameworks.
+Do not invent fields or requirements or delete cancelled history.
+Separate observed evidence from optional improvements.
+Rank findings as Critical, Important or Optional.
+For each finding, identify the code/test evidence to check
+Actual response: 
+Review result: No Critical findings. The query is pure for valid inputs, returns a fresh sorted list containing the original appointment objects, and filters statuses by enum identity. The service validates practitioner and status inputs; the console delegates workflows to services and catches expected ValueError/LookupError without broad exception handling. The full suite passes: 43 passed.
+Important — integration-test coverage is incomplete. The console test test_menu_reuses_session_store_and_recovers_from_invalid_commands in project/tests/test_console.py covers session reuse, valid workflows, malformed date format, duplicates, unknown participants, invalid status, and unknown choice. It does not cover impossible calendar dates, blank menu inputs, unknown appointment lookup/cancellation, repeated cancellation, or menu recovery after a booking conflict. Service tests cover some of these separately, but not the complete menu recovery path. Also missing from that menu scenario: rejecting a conflicting booking, successfully booking the freed slot after cancellation, and booking at the same time with another practitioner. Check project/smartcare/console.py:132-183 and the relevant service tests in project/tests/test_services.py.
+Optional — direct-query invalid-filter behavior. select_appointments in project/smartcare/queries.py:16-33 assumes status is AppointmentStatus | None; a string passed directly will silently produce no matches. The service rejects non-enum values at project/smartcare/services.py:149-169, so normal service/menu use is guarded. If the query itself is intended to reject invalid runtime arguments, add a direct-query test for that contract.
+Integrity and responsibility evidence: The store checks that appointments use the actual registered participant objects (project/smartcare/data_store.py:66-87); the service handles booking conflicts and cancellation transitions (project/smartcare/services.py:88-147); cancellation updates status without removing the stored appointment (project/smartcare/domain.py:129-137). The query tests verify filtering, ordering, object identity, and source non-mutation (project/tests/test_queries.py). No deletion or storage/framework changes are indicated.
 
-| AI finding | Code/test evidence | Severity | Accept/Modify/Reject and reason | Change or no change | Actual verification |
-|------------|--------------------|---|---|---|---|
-|            |                    | | | | |
+| AI finding                                                                                                                                                                                                                      | Code/test evidence                                                                                                                                                                  | Severity  | Accept/Modify/Reject and reason                                                                 | Change or no change                                                     | Actual verification                                                                                                    |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|-------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| Query implementation is pure for valid inputs, returns a fresh ordered list of original objects, and filters statuses by enum identity.                                                                                         | `project/smartcare/queries.py:9-33`; `project/tests/test_queries.py`                                                                                                                | Optional  | reject: no need at the moment                                                                   | No change.                                                              | Full suite: `PYTHONPATH=. ../../.venv/bin/python -m pytest -q` from `project/` — 43 passed.                            |
+| Console delegates to services, catches expected validation/lookup errors, and preserves cancellation history.                                                                                                                   | `project/smartcare/console.py:72-183`; `project/smartcare/services.py`; `project/smartcare/domain.py:129-137`; `project/tests/test_console.py`; `project/tests/test_services.py`    | Optional  | reject : no need at the moment                                                                  | No change.                                                              | Full suite: 43 passed; scripted menu test confirms one store is reused and cancelled record remains findable/listable. |
+| Menu recovery coverage missed impossible dates, blank inputs, unknown appointment lookup/cancellation, repeated cancellation, and conflict recovery; workflow coverage omitted freed-slot and different-practitioner booking.   | `project/tests/test_console.py::test_menu_recovers_from_blank_unknown_and_impossible_date_inputs`; `test_menu_handles_conflicts_freed_slots_and_repeated_cancellation`              | Important | Accept; these cases needed scripted menu-level coverage to verify recovery and unchanged state. | Added two scripted menu tests; no production-code change was needed.    | Focused menu tests: `PYTHONPATH=. ../../.venv/bin/python -m pytest -q tests/test_console.py` — 3 passed.               |
+| Direct `select_appointments` calls with a non-enum status silently return no matches; service listing rejects such values.                                                                                                      | `project/smartcare/queries.py:16-33`; `project/smartcare/services.py:149-169`; `project/tests/test_services.py::test_list_practitioner_appointments_known_empty_and_invalid_inputs` | Optional  | reject                                                                                          | None`; no requirement for direct invalid-query handling is established. | No change.                                                                                                             | 
 
-Responsibility check: explain how domain invariants, shared-store collections, service coordination, pure queries and console effects remain separate: <!-- response -->
+Responsibility check:
+Domain objects enforce local validity and guarded appointment status transitions. `SmartCareDataStore` owns the session's collections and checks uniqueness and that appointments reference the registered participant objects. Services coordinate lookups, bookings, conflict checks, cancellation and listing through that shared store without duplicating domain rules. Query functions take explicit collections and filters, return sorted fresh lists, and do not perform I/O or mutate source data. The console owns prompts, status-string conversion, formatting and user-facing error recovery; it creates one store and one set of services for the menu session, and calls the service APIs rather than changing records directly.
 
 ## F. Required reflections
 
-1. Which integration concern was architectural rather than a filtering/sorting detail? <!-- response -->
+1. Which integration concern was architectural rather than a filtering/sorting detail?
+The architectural concern was ensuring that the console, all services and the appointment query work through the same session-scoped data store. This preserves shared records and participant object identity across commands, while keeping state transitions and conflict rules in the domain/service layers.
 2. Which Copilot suggestion did you reject as over-engineering, and why? <!-- response -->
-3. How did you prove cancelled appointments remain retrievable and listable in the same session? <!-- response -->
+3. How did you prove cancelled appointments remain retrievable and listable in the same session? In the service test, I booked and cancelled an appointment, then asserted cancellation returned the original object, lookup by its ID returned that same object, and the default practitioner listing still included it. I also checked that the `SCHEDULED` filter excluded it while the store still contained it. The scripted menu test additionally verifies that one shared store is used across commands and that cancelled history remains available before exit.
 
 ## G. Ten formative answers
 
-1. What makes select_appointments pure, and what side effect breaks purity? <!-- response -->
-2. Which explicit inputs are needed, and why avoid a global store? <!-- response -->
-3. How can a new list reuse Appointment objects safely? <!-- response -->
-4. Why use a named key, and what breaks equal-time ties? <!-- response -->
-5. How do default and explicit status filters differ? <!-- response -->
-6. How do empty, unknown practitioner and invalid filter cases differ? <!-- response -->
-7. Which console errors recover, and how is unchanged state checked? <!-- response -->
-8. What is data integrity for registered participants, conflicts and history? <!-- response -->
-9. What is Copilot's review role, and who verifies findings? <!-- response -->
-10. How do pure functions and OOP responsibilities work together? <!-- response -->
+1. What makes select_appointments pure, and what side effect breaks purity? It depends only on its explicit appointment list, practitioner ID and optional status, then returns a new sorted list without changing the source list or appointments or doing I/O. Mutating the input list (for example, sorting it in place) or an appointment would break purity; so would reading input, printing, or accessing hidden global/store state.
+2. Which explicit inputs are needed, and why avoid a global store? Pass the appointment list, requested practitioner ID and optional `AppointmentStatus` (`None` means all statuses). Explicit inputs make the query's dependencies clear, allow it to be tested with different collections and filters, and prevent hidden coupling to shared mutable state or another session's data.
+3. How can a new list reuse Appointment objects safely? Build a new list containing references to the matching stored appointments, then sort that list rather than the source. Callers can reorder or clear the result without affecting the source collection, while the shared appointment identities and status/history remain intact.
+4. Why use a named key, and what breaks equal-time ties? A named `appointment_sort_key` keeps the ordering rule in one reusable, directly testable function and lets the query sort consistently with `key=appointment_sort_key`. It returns `(date_time, appointment_id)`: the appointment ID provides a deterministic tie-break when two appointments have the same date and time.
+5. How do default and explicit status filters differ? With `status=None` (the default), the query includes all matching appointments regardless of whether they are `SCHEDULED`, `CANCELLED` or `COMPLETED`. An explicit `AppointmentStatus` returns only appointments whose status is that enum member; for example, `SCHEDULED` excludes cancelled and completed history.
+6. How do empty, unknown practitioner and invalid filter cases differ? A registered practitioner with no appointments matching the filter is a valid request and returns `[]`. An unregistered practitioner ID raises `LookupError`; a blank ID or a filter that is not `None` or an `AppointmentStatus` raises `ValueError` through the service. The console converts recognized status text to the enum and reports invalid status text as a `ValueError` without leaving the menu.
+7. Which console errors recover, and how is unchanged state checked? The menu reports `ValueError` for blank or duplicate IDs, invalid fields/statuses, malformed or impossible date/time, conflicts and illegal repeated cancellation, and `LookupError` for unknown records; it reports unknown menu choices and returns to the menu. Scripted console tests inspect the shared store after rejected actions to confirm original registrations and appointments remain, no rejected booking was added, and later valid commands still work.
+8. What is data integrity for registered participants, conflicts and history? Booked appointments must reference the actual patient and practitioner objects registered in the shared store, and duplicate IDs or a same-practitioner/time conflict with another `SCHEDULED` appointment are rejected without adding a record. Cancellation changes the appointment status rather than deleting it, preserving the original appointment and participant links for retrieval and all-status history listing; only a `SCHEDULED` appointment can be cancelled.
+9. What is Copilot's review role, and who verifies findings? Copilot can offer a second-pass review by identifying potential behavior, responsibility and test-coverage issues with code/test evidence. Its findings are suggestions, not proof: I check them against the requirements and implementation, decides whether to accept or reject them, makes any changes, and verifies those changes with focused tests and regression checks.
+10. How do pure functions and OOP responsibilities work together? OOP keeps appointment invariants and guarded state transitions in domain objects, collections and participant identity in the shared store, and workflows in services. Pure query functions complement these objects by taking explicit data and returning ordered results without changing stored state; the console coordinates user interaction and calls services and queries through their contracts.
 
 ## H. Review, completion and common handover
 
-Issues and bounded branches: <!-- links -->
+Issues and bounded branches: N/a
 PR/diff and another-member human reviewer: <!-- actual links/name -->
 Review responses and Copilot comparison: <!-- links -->
-Integrated common Stage 9 SHA: <!-- complete -->
-Full regression command, working directory, actual count/result and evidence: <!-- complete -->
-README run instructions and scope/limitations: <!-- link -->
-Unresolved issues and support/action: <!-- complete -->
+Integrated common Stage 9 SHA: f5f8c2c
+Full regression command, working directory, actual count/result and evidence: Working directory: `st1-assignment-3/project/`. Command: `PYTHONPATH=. ../../.venv/bin/python -m pytest -q`. Actual result: `45 passed`. Evidence: pytest output from the full regression run; tests include domain, service, query and scripted console coverage.
+README run instructions and scope/limitations: See [`project/README.md`](../project/README.md) for `python main.py`, `python main.py --interactive`, and `python -m pytest` commands (run from `project/`). Stage 9 supports in-memory registration, lookup, booking, cancellation and practitioner appointment listing; the interactive session discards data on exit. Use synthetic data only. Persistence, rescheduling, assurance, past-date checks, duration rules checks are out of scope.
+Unresolved issues and support/action: N/A
 UG common candidate / PG future branch plan: <!-- complete -->
 
 - [ ] Query contracts, purity, new lists and named-key ordering verified.

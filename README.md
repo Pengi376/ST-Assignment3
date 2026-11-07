@@ -8,10 +8,10 @@ Baseline: Stage 6 foundation, 2026 revision 2. This starter deliberately leaves 
 - Group and tutorial: Group 1 / Thursday at 2.30 pm
 - Members, GitHub usernames and cohorts: Rylan - Pengi376, Tomas - Tom-uc3, Barry - BarrytheLegoMan;   
 - Repository URL: https://github.com/Pengi376/ST-Assignment3
-- Latest completed stage: [complete]
-- Verified code SHA: [complete]
-- Test command, working directory and observed result: [complete]
-- Final submitted SHA, if different from tested code SHA: [complete; explain evidence-only changes]
+- Latest completed stage: 9
+- Verified code SHA: f5f8c2c
+- Test command, working directory and observed result: python -m pytest
+- Final submitted SHA, if different from tested code SHA: f5f8c2c
 
 Do not put student IDs, private peer ratings, credentials or personal contact details here.
 
