@@ -21,13 +21,13 @@ For each, choose symptom, evidence or hypothesis/opinion, and explain your reaso
 - Traceback points to smartcare/services.py line 42 in the example.
 The example line number is illustrative; inspect the actual line in your run. The removal hypothesis must be tested against the current project, which has no public delete operation.
 
-| Statement | Classification | Reason |
-|-----------|----------------|--------|
-| Appointment disappears after cancellation. | Symptom | It describes what is seen when the system is used and does not say why it happens. It goes against FR-07, which says cancelled history must be retained. |
-| The data-store removal path is probably being called. | Hypothesis | The word "probably" shows it is a guess about the cause that has not been tested. It can be tested by checking data_store.py and services.py, as SmartCareDataStore has no public delete method. |
-| The failing test shows store.find_appointment('A1') returns None. | Evidence | It is an observed result from running a test and can be repeated. It supports the symptom but does not explain the cause. |
-| The service layer is badly designed. | Opinion | It is a general judgement with nothing observed or testable behind it, and it doesn't explain this failure. |
-| Traceback points to smartcare/services.py line 42 in the example. | Evidence | A traceback is recorded output showing where the failure appeared. It shows the location, not the cause, and the line number must be checked in the actual run. |
+| Statement                                                         | Classification   | Reason                                                                                                                                                                                           |
+|-------------------------------------------------------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Appointment disappears after cancellation.                        | Symptom          | It describes what is seen when the system is used and does not say why it happens. It goes against FR-07, which says cancelled history must be retained.                                         |
+| The data-store removal path is probably being called.             | Hypothesis       | The word "probably" shows it is a guess about the cause that has not been tested. It can be tested by checking data_store.py and services.py, as SmartCareDataStore has no public delete method. |
+| The failing test shows store.find_appointment('A1') returns None. | Evidence         | It is an observed result from running a test and can be repeated. It supports the symptom but does not explain the cause.                                                                        |
+| The service layer is badly designed.                              | Opinion          | It is a general judgement with nothing observed or testable behind it, and it doesn't explain this failure.                                                                                      |
+| Traceback points to smartcare/services.py line 42 in the example. | Evidence         | A traceback is recorded output showing where the failure appeared. It shows the location, not the cause, and the line number must be checked in the actual run.                                  |
 
 ### A.2 Build a debugging record
 Choose the cancelled-history scenario or a same-practitioner/time booking. Before changing code, record expected behaviour, observed behaviour, minimal reproduction, a hypothesis and evidence to inspect. Use a requirement to justify the expectation. Keep the initial hypothesis even if later evidence disproves it.
